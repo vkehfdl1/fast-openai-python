@@ -29,16 +29,14 @@ gpt_4_turbo_limits = [
 
 
 MODEL_LIMITS = [
-    ModelLimit.from_rate_limits("gpt-3.5-turbo", gpt_3_5_limits),
-    ModelLimit.from_rate_limits("gpt-3.5-turbo-0125", gpt_3_5_limits),
-    ModelLimit.from_rate_limits("gpt-3.5-turbo-0301", gpt_3_5_limits),
-    ModelLimit.from_rate_limits("gpt-3.5-turbo-0613", gpt_3_5_limits),
-    ModelLimit.from_rate_limits("gpt-3.5-turbo-1106", gpt_3_5_limits),
-    ModelLimit.from_rate_limits("gpt-3.5-turbo-16k", gpt_3_5_limits),
-    ModelLimit.from_rate_limits("gpt-3.5-turbo-16k-0125", gpt_3_5_limits),
-    ModelLimit.from_rate_limits("gpt-4", gpt_4_limits),
-    ModelLimit.from_rate_limits("gpt-4-0613", gpt_4_limits),
-    ModelLimit.from_rate_limits("gpt-4-turbo-preview", gpt_4_turbo_limits),
-    ModelLimit.from_rate_limits("gpt-4-0125-preview", gpt_4_turbo_limits),
-    ModelLimit.from_rate_limits("gpt-4-1106-preview", gpt_4_turbo_limits),
+    ModelLimit.from_rate_limits("gpt-3.5-turbo", 16_385, gpt_3_5_limits),
+    ModelLimit.from_rate_limits("gpt-3.5-turbo-0125", 16_385, gpt_3_5_limits),
+    ModelLimit.from_rate_limits("gpt-3.5-turbo-0613", 4_096, gpt_3_5_limits),
+    ModelLimit.from_rate_limits("gpt-3.5-turbo-1106", 16_385, gpt_3_5_limits),
+    ModelLimit.from_rate_limits("gpt-3.5-turbo-16k", 16_385, gpt_3_5_limits),
+    ModelLimit.from_rate_limits("gpt-4", 8_192, gpt_4_limits),
+    ModelLimit.from_rate_limits("gpt-4-0613", 8_192, gpt_4_limits),
+    ModelLimit.from_rate_limits("gpt-4-turbo-preview", 128_000, gpt_4_turbo_limits),
+    ModelLimit.from_rate_limits("gpt-4-0125-preview", 128_000, gpt_4_turbo_limits),
+    ModelLimit.from_rate_limits("gpt-4-1106-preview", 128_000, gpt_4_turbo_limits),
 ]

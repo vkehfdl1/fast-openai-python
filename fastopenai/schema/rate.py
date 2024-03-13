@@ -22,6 +22,7 @@ class RateLimit:
 @dataclass
 class ModelLimit:
     model_name: str
+    context_len: int
     free: RateLimit
     tier_1: RateLimit
     tier_2: RateLimit
@@ -30,9 +31,10 @@ class ModelLimit:
     tier_5: RateLimit
 
     @classmethod
-    def from_list(cls, model_name: str, lst: List[Dict]):
+    def from_list(cls, model_name: str, context_len: int, lst: List[Dict]):
         return cls(
             model_name=model_name,
+            context_len=context_len,
             free=RateLimit.from_dict(lst[0]),
             tier_1=RateLimit.from_dict(lst[1]),
             tier_2=RateLimit.from_dict(lst[2]),
@@ -42,9 +44,10 @@ class ModelLimit:
         )
 
     @classmethod
-    def from_rate_limits(cls, model_name: str, lst: List[RateLimit]):
+    def from_rate_limits(cls, model_name: str, context_len: int, lst: List[RateLimit]):
         return cls(
             model_name=model_name,
+            context_len=context_len,
             free=lst[0],
             tier_1=lst[1],
             tier_2=lst[2],
