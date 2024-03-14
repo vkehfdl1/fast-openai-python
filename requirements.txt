@@ -1,2 +1,4 @@
 openai>=1.13.3
 dataclasses
+tqdm
+tiktoken
