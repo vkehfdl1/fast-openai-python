@@ -65,7 +65,7 @@ def make_batches(messages, rpm_limit: int, tpm_limit: int, context_len: int):
     current_batch = []
     current_tokens = 0
 
-    for message in tqdm(messages):
+    for message in messages:
         prompt_tokens = count_tokens(message)
         if prompt_tokens > context_len:
             logger.warning(f"Message with {prompt_tokens} tokens exceeds context length {context_len}. Skipping."
