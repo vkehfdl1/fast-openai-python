@@ -87,17 +87,22 @@ def make_batches(messages, rpm_limit: int, tpm_limit: int, context_len: int):
 
 # Async function to process a single batch of prompts
 async def process_batch(messages, model, **kwargs):
-    responses = []
-    for message in messages:
+    async def send_request(message):
         if message is None:
-            responses.append(None)
+            return None
         else:
-            response = await client.chat.completions.create(
+            # Use the provided client.chat.completions.create for sending the request
+            return await client.chat.completions.create(
                 messages=message,
                 model=model,
                 **kwargs
             )
-            responses.append(response)
+
+    # Create a list of coroutines for all messages
+    tasks = [send_request(message) for message in messages]
+
+    # Use asyncio.gather to run all tasks concurrently and collect their results
+    responses = await asyncio.gather(*tasks)
     return responses
 
 
