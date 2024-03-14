@@ -1,4 +1,4 @@
-from fastopenai.run import fast_chat_completion
+from openaiexpress import fast_chat_completion
 
 
 def test_fast_chat_completion():

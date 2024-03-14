@@ -1,4 +1,4 @@
-from fastopenai.schema.rate import ModelLimit, RateLimit
+from openaiexpress.schema.rate import ModelLimit, RateLimit
 
 gpt_3_5_limits = [
     RateLimit(rpm=3, rpd=200, tpm=40_000),

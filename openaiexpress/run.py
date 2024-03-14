@@ -8,7 +8,7 @@ from tqdm import tqdm
 import tiktoken
 import logging
 
-from fastopenai.constant_limits import MODEL_LIMITS
+from openaiexpress.constant_limits import MODEL_LIMITS
 
 # Initialize the AsyncOpenAI client
 client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))

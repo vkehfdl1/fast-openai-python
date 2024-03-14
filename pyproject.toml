@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fast-openai"
+name = "openai-express"
 authors = [
     { name = "vkehfdl1", email = "vkehfdl1@gmail.com" }
 ]
@@ -23,11 +23,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-urls = { Homepage = "https://github.com/vkehfdl1/fast-openai-python" }
+urls = { Homepage = "https://github.com/vkehfdl1/openai-express" }
 dynamic = ["version", "dependencies"]
 
 [tool.setuptools.dynamic]
-version = { file = ["fastopenai/VERSION"] }
+version = { file = ["openaiexpress/VERSION"] }
 dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools]
@@ -35,7 +35,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["fastopenai*"]
+include = ["openaiexpress*"]
 exclude = ["tests"]
 
 [tool.pytest.ini_options]
