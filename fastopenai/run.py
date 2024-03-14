@@ -6,11 +6,15 @@ from typing import Dict, List
 from openai import AsyncOpenAI
 from tqdm import tqdm
 import tiktoken
+import logging
 
 from fastopenai.constant_limits import MODEL_LIMITS
 
 # Initialize the AsyncOpenAI client
 client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+
+logger = logging.getLogger("fast-openai")
 
 
 # Function to count tokens in a prompt
@@ -64,6 +68,8 @@ def make_batches(messages, rpm_limit: int, tpm_limit: int, context_len: int):
     for message in tqdm(messages):
         prompt_tokens = count_tokens(message)
         if prompt_tokens > context_len:
+            logger.warning(f"Message with {prompt_tokens} tokens exceeds context length {context_len}. Skipping."
+                           f"The message : \n{message}")
             current_batch.append(None)  # skip this message
 
         if len(current_batch) >= rpm_limit or current_tokens + prompt_tokens > tpm_limit:
