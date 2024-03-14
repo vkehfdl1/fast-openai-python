@@ -2,17 +2,15 @@ import os
 import asyncio
 import time
 from typing import Dict, List
-from dotenv import load_dotenv
 
 from openai import AsyncOpenAI
 from tqdm import tqdm
 import tiktoken
 
-load_dotenv()
+from fastopenai.constant_limits import MODEL_LIMITS
 
 # Initialize the AsyncOpenAI client
 client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-tokenizer = tiktoken.get_encoding("cl100k_base")
 
 
 # Function to count tokens in a prompt
@@ -115,20 +113,13 @@ async def process_prompts_with_rate_limiting(messages: List[List[Dict]], model, 
     return all_responses
 
 
-# Example usage
-async def main():
-    prompts = [
-        [{"role": "user", "content": "Say this is a test"}],
-        [{"role": "user", "content": "Another test prompt"}],
-    ]
-    model = "gpt-3.5-turbo"
-    tpm_limit = 1000  # Example token per minute limit
-    rpm_limit = 5  # Example request per minute limit
-    context_length = 100
-    results = await process_prompts_with_rate_limiting(prompts, model, tpm_limit, rpm_limit, context_length)
-    for result in results:
-        print(result)  # Process or print the results as needed
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+def fast_chat_completion(messages, model_name: str, tier: str):
+    # find limits
+    model_limits = list(filter(lambda x: x.model_name == model_name, MODEL_LIMITS))
+    if len(model_limits) <= 0:
+        raise ValueError(f"Model {model_name} not found in MODEL_LIMITS")
+    model_limit = model_limits[0]
+    rate_limit = getattr(model_limit, tier)
+    results = asyncio.run(process_prompts_with_rate_limiting(messages, model_name, rate_limit.tpm, rate_limit.rpm,
+                                                             model_limit.context_len))
+    return results
