@@ -113,13 +113,13 @@ async def process_prompts_with_rate_limiting(messages: List[List[Dict]], model, 
     return all_responses
 
 
-def fast_chat_completion(messages, model_name: str, tier: str):
+def fast_chat_completion(messages, model: str, tier: str, **kwargs):
     # find limits
-    model_limits = list(filter(lambda x: x.model_name == model_name, MODEL_LIMITS))
+    model_limits = list(filter(lambda x: x.model_name == model, MODEL_LIMITS))
     if len(model_limits) <= 0:
-        raise ValueError(f"Model {model_name} not found in MODEL_LIMITS")
+        raise ValueError(f"Model {model} not found in MODEL_LIMITS")
     model_limit = model_limits[0]
     rate_limit = getattr(model_limit, tier)
-    results = asyncio.run(process_prompts_with_rate_limiting(messages, model_name, rate_limit.tpm, rate_limit.rpm,
-                                                             model_limit.context_len))
+    results = asyncio.run(process_prompts_with_rate_limiting(messages, model, rate_limit.tpm, rate_limit.rpm,
+                                                             model_limit.context_len, **kwargs))
     return results
