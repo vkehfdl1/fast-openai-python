@@ -58,13 +58,16 @@ def count_tokens(messages, model="gpt-3.5-turbo-0613"):
 
 
 # Function to make batches with RPM and TPM limits
-def make_batches(messages, rpm_limit, tpm_limit):
+def make_batches(messages, rpm_limit: int, tpm_limit: int, context_len: int):
     batches = []
     current_batch = []
     current_tokens = 0
 
     for message in tqdm(messages):
         prompt_tokens = count_tokens(message)
+        if prompt_tokens > context_len:
+            current_batch.append(None)  # skip this message
+
         if len(current_batch) >= rpm_limit or current_tokens + prompt_tokens > tpm_limit:
             batches.append(current_batch)
             current_batch = [message]
@@ -82,28 +85,32 @@ def make_batches(messages, rpm_limit, tpm_limit):
 async def process_batch(messages, model, **kwargs):
     responses = []
     for message in messages:
-        response = await client.chat.completions.create(
-            messages=message,
-            model=model,
-            **kwargs
-        )
-        responses.append(response)
+        if message is None:
+            responses.append(None)
+        else:
+            response = await client.chat.completions.create(
+                messages=message,
+                model=model,
+                **kwargs
+            )
+            responses.append(response)
     return responses
 
 
 # Main async function to process all prompts with rate limiting
-async def process_prompts_with_rate_limiting(messages: List[List[Dict]], model, tpm_limit, rpm_limit):
-    batches = make_batches(messages, rpm_limit, tpm_limit)
+async def process_prompts_with_rate_limiting(messages: List[List[Dict]], model, tpm_limit, rpm_limit, context_len,
+                                             **kwargs):
+    batches = make_batches(messages, rpm_limit, tpm_limit, context_len)
     all_responses = []
 
-    for i, batch in tqdm(enumerate(batches)):
+    for i, batch in enumerate(tqdm(batches)):
         start_time = time.time()
-        responses = await process_batch(batch, model)
+        responses = await process_batch(batch, model, **kwargs)
         all_responses.extend(responses)
         elapsed_time = time.time() - start_time
 
-        if elapsed_time < 60 and i + 1 < len(batches):
-            await asyncio.sleep(60 - elapsed_time)  # Wait until a minute has passed
+        if elapsed_time < 62 and i + 1 < len(batches):
+            await asyncio.sleep(62 - elapsed_time)  # Wait until a minute has passed
 
     return all_responses
 
@@ -117,7 +124,8 @@ async def main():
     model = "gpt-3.5-turbo"
     tpm_limit = 1000  # Example token per minute limit
     rpm_limit = 5  # Example request per minute limit
-    results = await process_prompts_with_rate_limiting(prompts, model, tpm_limit, rpm_limit)
+    context_length = 100
+    results = await process_prompts_with_rate_limiting(prompts, model, tpm_limit, rpm_limit, context_length)
     for result in results:
         print(result)  # Process or print the results as needed
 
