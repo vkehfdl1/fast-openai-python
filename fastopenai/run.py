@@ -15,16 +15,12 @@ client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 
 logger = logging.getLogger("fast-openai")
+encoding = tiktoken.get_encoding("cl100k_base")
 
 
 # Function to count tokens in a prompt
 def count_tokens(messages, model="gpt-3.5-turbo-0613"):
     """Return the number of tokens used by a list of messages."""
-    try:
-        encoding = tiktoken.encoding_for_model(model)
-    except KeyError:
-        # print("Warning: model not found. Using cl100k_base encoding.")
-        encoding = tiktoken.get_encoding("cl100k_base")
     if model in {
         "gpt-3.5-turbo-0613",
         "gpt-3.5-turbo-16k-0613",
@@ -52,7 +48,8 @@ def count_tokens(messages, model="gpt-3.5-turbo-0613"):
     for message in messages:
         num_tokens += tokens_per_message
         for key, value in message.items():
-            num_tokens += len(encoding.encode(value))
+            num_tokens += len(encoding.encode(value, allowed_special="all",
+                                              disallowed_special=()))
             if key == "name":
                 num_tokens += tokens_per_name
     num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
