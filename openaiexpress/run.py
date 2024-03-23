@@ -1,6 +1,8 @@
+import itertools
 import os
 import asyncio
 import time
+from multiprocessing import Queue, Process
 from typing import Dict, List
 
 from openai import AsyncOpenAI
@@ -12,7 +14,6 @@ from openaiexpress.constant_limits import MODEL_LIMITS
 
 # Initialize the AsyncOpenAI client
 client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
 
 logger = logging.getLogger("fast-openai")
 encoding = tiktoken.get_encoding("cl100k_base")
@@ -83,7 +84,7 @@ def make_batches(messages, rpm_limit: int, tpm_limit: int, context_len: int):
 
 
 # Async function to process a single batch of prompts
-async def process_batch(messages, model, **kwargs):
+async def process_batch(messages, model, result_queue, **kwargs):
     async def send_request(message):
         if message is None:
             return None
@@ -100,7 +101,29 @@ async def process_batch(messages, model, **kwargs):
 
     # Use asyncio.gather to run all tasks concurrently and collect their results
     responses = await asyncio.gather(*tasks)
-    return responses
+    result_queue.put(responses)
+
+
+def worker_process(batch_queue, result_queue):
+    """
+    Worker process that takes batches from the batch queue, processes them,
+    and puts the results in the result queue.
+    """
+    while True:
+        batch = batch_queue.get()
+        if batch is None:
+            # Sentinel value received, indicating no more batches to process
+            break
+        if 'messages' not in batch or 'model' not in batch:
+            raise ValueError("Batch must contain 'messages' and 'model' keys")
+        asyncio.run(process_batch(result_queue=result_queue, **batch))
+
+
+async def pseudo_process_batch(messages, result_queue):
+    responses = "pseudo_responses"
+    await asyncio.sleep(2)
+    print("Pseudo processing batch")
+    result_queue.put([responses] * len(messages))
 
 
 # Main async function to process all prompts with rate limiting
@@ -119,6 +142,54 @@ async def process_prompts_with_rate_limiting(messages: List[List[Dict]], model, 
             await asyncio.sleep(62 - elapsed_time)  # Wait until a minute has passed
 
     return all_responses
+
+
+def distribute_batches(batches, model, **kwargs):
+    """
+    Distribute batches across multiple processes for processing.
+    """
+    num_cpus = os.cpu_count()
+    batch_queue = Queue()
+    result_queue = Queue()
+
+    # Start worker processes
+    processes = [Process(target=worker_process, args=(batch_queue, result_queue)) for _ in range(num_cpus)]
+    for p in processes:
+        p.start()
+
+    # Distribute batches with a delay
+    for i, batch in enumerate(batches):
+        if i > 0:
+            time.sleep(62)  # Wait for 62 seconds before processing the next batch
+        batch_queue.put({
+            "messages": batch,
+            "model": model,
+            **kwargs
+        })
+
+    # Signal the worker processes to stop
+    for _ in range(num_cpus):
+        batch_queue.put(None)
+
+    # Wait for all processes to complete
+    for p in processes:
+        p.join()
+
+    # Collect results in the order of batches
+    results = [result_queue.get() for _ in batches]
+    return list(itertools.chain.from_iterable(results))
+
+
+def fast_chat_completion_worker(messages, model: str, tier: str, **kwargs):
+    # find limits
+    model_limits = list(filter(lambda x: x.model_name == model, MODEL_LIMITS))
+    if len(model_limits) <= 0:
+        raise ValueError(f"Model {model} not found in MODEL_LIMITS")
+    model_limit = model_limits[0]
+    rate_limit = getattr(model_limit, tier)
+    batches = make_batches(messages, rate_limit.rpm, rate_limit.tpm, model_limit.context_len)
+    results = distribute_batches(batches, model, **kwargs)
+    return results
 
 
 def fast_chat_completion(messages, model: str, tier: str, **kwargs):

@@ -1,4 +1,5 @@
 from openaiexpress import fast_chat_completion
+from openaiexpress.run import fast_chat_completion_worker
 
 
 def test_fast_chat_completion():
@@ -8,6 +9,6 @@ def test_fast_chat_completion():
     ]
     model = "gpt-3.5-turbo"
     tier = "tier_4"
-    results = fast_chat_completion(prompts, model, tier)
+    results = fast_chat_completion_worker(prompts, model, tier)
 
     assert len(results) == 2
